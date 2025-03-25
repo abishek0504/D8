@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Playful Date Invitation with Animation</title>
+  <title>Playful Date Invitation with Animation - Debug Version</title>
   <style>
     body { margin: 0; overflow: hidden; }
     #message {
@@ -28,6 +28,7 @@
   <!-- Include GLTFLoader -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
   <script>
+    console.log("Initializing scene...");
     let scene, camera, renderer, character, mixer, clock;
     const keysPressed = { w: false, a: false, s: false, d: false };
 
@@ -35,37 +36,46 @@
     animate();
 
     function init() {
-      // Create scene and set its background color to sky blue
+      // Create scene and set background color
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87CEEB);
+      console.log("Scene created.");
 
-      // Set up camera with adjusted position
+      // Set up camera
       camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 5, 10); // Moved further back to see more
+      camera.position.set(0, 2, 5);
       camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-      // Set up renderer with clear color matching the scene background
+      // Set up renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(0x87CEEB);
       document.body.appendChild(renderer.domElement);
-      
-      // Add console output for debugging
-      console.log("Three.js renderer created");
+      console.log("Renderer set up.");
 
       // Clock for animations
       clock = new THREE.Clock();
 
-      // Add lights
+      // Lights
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambientLight);
       const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
       dirLight.position.set(5, 10, 7.5);
       scene.add(dirLight);
+      console.log("Lights added.");
 
-      // Create a ground plane with a grass texture
+      // Ground plane with grass texture
       const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load('https://threejs.org/examples/textures/grasslight-big.jpg');
+      const groundTexture = textureLoader.load(
+        'https://threejs.org/examples/textures/grasslight-big.jpg',
+        function(texture) {
+          console.log("Ground texture loaded.");
+        },
+        undefined,
+        function(err) {
+          console.error("Error loading ground texture:", err);
+        }
+      );
       groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
       groundTexture.repeat.set(25, 25);
       const groundMaterial = new THREE.MeshLambertMaterial({ map: groundTexture });
@@ -73,45 +83,38 @@
       ground.rotation.x = - Math.PI / 2;
       ground.position.y = 0;
       scene.add(ground);
+      console.log("Ground added.");
 
-      // Optional: a fallback cube while the Fox model loads (you can remove this later)
+      // Fallback cube to show something while the Fox model loads
       const fallbackGeometry = new THREE.BoxGeometry(1,1,1);
       const fallbackMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
       const fallbackCube = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
       fallbackCube.position.set(-3, 0.5, 0);
       scene.add(fallbackCube);
+      console.log("Fallback cube added.");
 
-      // Add a simple, colorful cube that should be visible immediately
-      const cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
-      const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xff00ff });
-      const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-      cube.position.set(0, 1, 0);
-      scene.add(cube);
-      console.log("Debug cube added to scene");
-
-      // Load the Fox glTF model (with animations)
+      // Load the Fox model
       const loader = new THREE.GLTFLoader();
+      console.log("Loading Fox model...");
       loader.load(
         'https://threejs.org/examples/models/gltf/Fox.glb',
         function(gltf) {
-          // Remove fallback cube if desired
+          console.log("Fox model loaded successfully.");
+          // Remove fallback cube
           scene.remove(fallbackCube);
 
           character = gltf.scene;
-          // Adjust scale; the Fox model is large by default
           character.scale.set(0.02, 0.02, 0.02);
           character.position.set(0, 0, 0);
           scene.add(character);
 
-          // Set up the animation mixer for the model animations
           mixer = new THREE.AnimationMixer(character);
-          // Play the first animation (usually idle)
           const idleAction = mixer.clipAction(gltf.animations[0]);
           idleAction.play();
         },
         undefined,
         function(error) {
-          console.error('An error occurred while loading the model:', error);
+          console.error("Error loading Fox model:", error);
         }
       );
 
@@ -133,7 +136,6 @@
         }
       });
 
-      // Adjust renderer on window resize
       window.addEventListener('resize', onWindowResize, false);
     }
 
@@ -146,22 +148,19 @@
     function animate() {
       requestAnimationFrame(animate);
       const delta = clock.getDelta();
-      if(mixer) mixer.update(delta);
+      if (mixer) mixer.update(delta);
 
-      // Move the character if it's loaded
-      if(character) {
+      if (character) {
         const speed = 2 * delta;
         if (keysPressed.w) character.position.z -= speed;
         if (keysPressed.s) character.position.z += speed;
         if (keysPressed.a) character.position.x -= speed;
         if (keysPressed.d) character.position.x += speed;
 
-        // Basic camera follow: camera moves with the character
         camera.position.x = character.position.x;
         camera.position.z = character.position.z + 5;
         camera.lookAt(character.position);
 
-        // Update the playful message when reaching the target zone (example: x > 2 and z < -2)
         const messageEl = document.getElementById("message");
         if (character.position.x > 2 && character.position.z < -2) {
           messageEl.innerText = "Hey, would you like to go on a date?";

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Playful Date Invitation with Animation - Import Map Version</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { margin: 0; overflow: hidden; }
     #message {
@@ -32,7 +33,6 @@
 <body>
   <div id="message">Use WASD keys to move the character!</div>
   <script type="module">
-    // Import Three.js via our import map and GLTFLoader from CDN.
     import * as THREE from 'three';
     import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
 
@@ -101,7 +101,7 @@
       const loader = new GLTFLoader();
       console.log("Loading Fox model...");
       loader.load(
-        'https://threejs.org/examples/models/gltf/Fox.glb',
+        'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/Fox.glb',
         (gltf) => {
           console.log("Fox model loaded successfully.");
           scene.remove(fallbackCube);

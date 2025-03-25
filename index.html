@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Playful Date Invitation</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #222; }
+    #message {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-family: sans-serif;
+      font-size: 24px;
+      z-index: 100;
+      transition: all 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="message">Use WASD keys to move the character!</div>
+  <!-- Include Three.js from a CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Set up scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Create a simple 3D character (a cube)
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
+    const character = new THREE.Mesh(geometry, material);
+    scene.add(character);
+
+    // Add a directional light
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 10, 7.5);
+    scene.add(light);
+
+    // Position the camera
+    camera.position.set(0, 2, 5);
+    camera.lookAt(character.position);
+
+    // Variables to track WASD input
+    const move = { w: false, a: false, s: false, d: false };
+
+    // Listen for keydown events
+    document.addEventListener('keydown', event => {
+      if (event.key === 'w' || event.key === 'W') move.w = true;
+      if (event.key === 'a' || event.key === 'A') move.a = true;
+      if (event.key === 's' || event.key === 'S') move.s = true;
+      if (event.key === 'd' || event.key === 'D') move.d = true;
+    });
+
+    // Listen for keyup events
+    document.addEventListener('keyup', event => {
+      if (event.key === 'w' || event.key === 'W') move.w = false;
+      if (event.key === 'a' || event.key === 'A') move.a = false;
+      if (event.key === 's' || event.key === 'S') move.s = false;
+      if (event.key === 'd' || event.key === 'D') move.d = false;
+    });
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Update character's position based on input
+      const speed = 0.05;
+      if (move.w) character.position.z -= speed;
+      if (move.s) character.position.z += speed;
+      if (move.a) character.position.x -= speed;
+      if (move.d) character.position.x += speed;
+
+      // Check if the character is in the target zone
+      // (For example, when x > 2 and z < -2)
+      const messageEl = document.getElementById("message");
+      if (character.position.x > 2 && character.position.z < -2) {
+        messageEl.innerText = "Hey, would you like to go on a date?";
+        messageEl.style.color = "#ff4081"; // Change the message color for emphasis
+      } else {
+        messageEl.innerText = "Use WASD keys to move the character!";
+        messageEl.style.color = "#fff";
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

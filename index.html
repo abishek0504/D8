@@ -39,9 +39,9 @@
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87CEEB);
 
-      // Set up camera
+      // Set up camera with adjusted position
       camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 2, 5);
+      camera.position.set(0, 5, 10); // Moved further back to see more
       camera.lookAt(new THREE.Vector3(0, 0, 0));
 
       // Set up renderer with clear color matching the scene background
@@ -49,6 +49,9 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(0x87CEEB);
       document.body.appendChild(renderer.domElement);
+      
+      // Add console output for debugging
+      console.log("Three.js renderer created");
 
       // Clock for animations
       clock = new THREE.Clock();
@@ -77,6 +80,14 @@
       const fallbackCube = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
       fallbackCube.position.set(-3, 0.5, 0);
       scene.add(fallbackCube);
+
+      // Add a simple, colorful cube that should be visible immediately
+      const cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
+      const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xff00ff });
+      const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+      cube.position.set(0, 1, 0);
+      scene.add(cube);
+      console.log("Debug cube added to scene");
 
       // Load the Fox glTF model (with animations)
       const loader = new THREE.GLTFLoader();

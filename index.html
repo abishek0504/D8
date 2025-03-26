@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Playful Date Invitation with Animation</title>
+  <title>Interactive Date Invitation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { margin: 0; overflow: hidden; }
@@ -15,13 +15,13 @@
       font-family: sans-serif;
       font-size: 24px;
       z-index: 100;
-      transition: all 0.5s ease;
+      transition: background-color 0.5s ease;
       background: rgba(0, 0, 0, 0.5);
       padding: 10px 20px;
       border-radius: 5px;
     }
   </style>
-  <!-- Import map to resolve "three" -->
+  <!-- Import map to resolve the "three" module -->
   <script type="importmap">
     {
       "imports": {
@@ -36,97 +36,87 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
 
-    console.log("Initializing scene...");
-    let scene, camera, renderer, character, mixer, clock;
+    let scene, camera, renderer, character;
     const keysPressed = { w: false, a: false, s: false, d: false };
 
     init();
     animate();
 
     function init() {
-      // Create scene with sky-blue background.
+      // Create scene with a sky-blue background.
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87CEEB);
-      console.log("Scene created.");
 
       // Set up camera.
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
       camera.position.set(0, 2, 5);
-      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      camera.lookAt(0, 0, 0);
 
       // Set up renderer.
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setClearColor(0x87CEEB);
       document.body.appendChild(renderer.domElement);
-      console.log("Renderer set up.");
 
-      // Clock for animations.
-      clock = new THREE.Clock();
-
-      // Add lights.
+      // Add ambient and directional light.
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambientLight);
       const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
       directionalLight.position.set(5, 10, 7.5);
       scene.add(directionalLight);
-      console.log("Lights added.");
 
-      // Load the ground texture and create the ground plane.
+      // Load a repeating grass texture for the ground.
       const textureLoader = new THREE.TextureLoader();
       const groundTexture = textureLoader.load(
-        'https://raw.githack.com/mrdoob/three.js/master/examples/textures/grasslight-big.jpg',
+        'https://threejsfundamentals.org/threejs/resources/images/grass.jpg',
         () => { console.log("Ground texture loaded."); },
         undefined,
         (err) => { console.error("Error loading ground texture:", err); }
       );
       groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
       groundTexture.repeat.set(25, 25);
+
       const groundMaterial = new THREE.MeshLambertMaterial({ map: groundTexture });
       const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), groundMaterial);
       ground.rotation.x = -Math.PI / 2;
       ground.position.y = 0;
       scene.add(ground);
-      console.log("Ground added.");
 
-      // Add a fallback red cube so you see something while the Fox model loads.
+      // Add a fallback red cube to display while the duck model loads.
       const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
       const fallbackMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
       const fallbackCube = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
       fallbackCube.position.set(-3, 0.5, 0);
       scene.add(fallbackCube);
-      console.log("Fallback cube added.");
 
-      // Load the Fox model (animated) using GLTFLoader.
+      // Load the Duck model (a glTF asset) using GLTFLoader.
       const loader = new GLTFLoader();
-      console.log("Loading Fox model...");
+      console.log("Loading Duck model...");
       loader.load(
-        'https://raw.githack.com/mrdoob/three.js/master/examples/models/gltf/Fox.glb',
+        'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb',
         (gltf) => {
-          console.log("Fox model loaded successfully.");
+          console.log("Duck model loaded successfully.");
           scene.remove(fallbackCube);
           character = gltf.scene;
-          character.scale.set(0.02, 0.02, 0.02);
+          // Scale down the duck for our scene.
+          character.scale.set(0.01, 0.01, 0.01);
           character.position.set(0, 0, 0);
           scene.add(character);
-          mixer = new THREE.AnimationMixer(character);
-          const idleAction = mixer.clipAction(gltf.animations[0]);
-          idleAction.play();
         },
         undefined,
-        (error) => { console.error("Error loading Fox model:", error); }
+        (error) => { console.error("Error loading Duck model:", error); }
       );
 
       // Set up WASD keyboard input.
       document.addEventListener('keydown', (event) => {
         const key = event.key.toLowerCase();
-        if (['w', 'a', 's', 'd'].includes(key)) {
+        if (keysPressed.hasOwnProperty(key)) {
           keysPressed[key] = true;
         }
       });
       document.addEventListener('keyup', (event) => {
         const key = event.key.toLowerCase();
-        if (['w', 'a', 's', 'd'].includes(key)) {
+        if (keysPressed.hasOwnProperty(key)) {
           keysPressed[key] = false;
         }
       });
@@ -142,22 +132,22 @@
 
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      if (mixer) mixer.update(delta);
-
+      // Move the character if loaded.
       if (character) {
-        const speed = 2 * delta;
+        const speed = 0.05;
         if (keysPressed.w) character.position.z -= speed;
         if (keysPressed.s) character.position.z += speed;
         if (keysPressed.a) character.position.x -= speed;
         if (keysPressed.d) character.position.x += speed;
+        // Rotate the duck slightly for a dynamic effect.
+        character.rotation.y += 0.01;
 
-        // Basic camera follow.
+        // Make the camera follow the character.
         camera.position.x = character.position.x;
         camera.position.z = character.position.z + 5;
         camera.lookAt(character.position);
 
-        // Display invitation when in target zone (e.g., x > 2 and z < -2).
+        // Change the message when the character reaches a target zone (example: x > 2 and z < -2).
         const messageEl = document.getElementById("message");
         if (character.position.x > 2 && character.position.z < -2) {
           messageEl.innerText = "Hey, would you like to go on a date?";
@@ -167,7 +157,6 @@
           messageEl.style.backgroundColor = "rgba(0,0,0,0.5)";
         }
       }
-
       renderer.render(scene, camera);
     }
   </script>

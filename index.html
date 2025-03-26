@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Playful Date Invitation with Animation - Import Map Version</title>
+  <title>Playful Date Invitation with Animation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { margin: 0; overflow: hidden; }
@@ -16,12 +16,12 @@
       font-size: 24px;
       z-index: 100;
       transition: all 0.5s ease;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       padding: 10px 20px;
       border-radius: 5px;
     }
   </style>
-  <!-- Import map to resolve the "three" specifier -->
+  <!-- Import map to resolve "three" -->
   <script type="importmap">
     {
       "imports": {
@@ -67,15 +67,15 @@
       // Add lights.
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambientLight);
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      dirLight.position.set(5, 10, 7.5);
-      scene.add(dirLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 10, 7.5);
+      scene.add(directionalLight);
       console.log("Lights added.");
 
-      // Create a ground plane with a grass texture.
+      // Load the ground texture and create the ground plane.
       const textureLoader = new THREE.TextureLoader();
       const groundTexture = textureLoader.load(
-        'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/grasslight-big.jpg',
+        'https://raw.githack.com/mrdoob/three.js/master/examples/textures/grasslight-big.jpg',
         () => { console.log("Ground texture loaded."); },
         undefined,
         (err) => { console.error("Error loading ground texture:", err); }
@@ -89,7 +89,7 @@
       scene.add(ground);
       console.log("Ground added.");
 
-      // Fallback cube to display while the Fox model loads.
+      // Add a fallback red cube so you see something while the Fox model loads.
       const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
       const fallbackMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
       const fallbackCube = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
@@ -97,20 +97,18 @@
       scene.add(fallbackCube);
       console.log("Fallback cube added.");
 
-      // Load the Fox model using GLTFLoader.
+      // Load the Fox model (animated) using GLTFLoader.
       const loader = new GLTFLoader();
       console.log("Loading Fox model...");
       loader.load(
-        'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/Fox.glb',
+        'https://raw.githack.com/mrdoob/three.js/master/examples/models/gltf/Fox.glb',
         (gltf) => {
           console.log("Fox model loaded successfully.");
           scene.remove(fallbackCube);
-
           character = gltf.scene;
           character.scale.set(0.02, 0.02, 0.02);
           character.position.set(0, 0, 0);
           scene.add(character);
-
           mixer = new THREE.AnimationMixer(character);
           const idleAction = mixer.clipAction(gltf.animations[0]);
           idleAction.play();
@@ -121,19 +119,15 @@
 
       // Set up WASD keyboard input.
       document.addEventListener('keydown', (event) => {
-        switch (event.key.toLowerCase()) {
-          case 'w': keysPressed.w = true; break;
-          case 'a': keysPressed.a = true; break;
-          case 's': keysPressed.s = true; break;
-          case 'd': keysPressed.d = true; break;
+        const key = event.key.toLowerCase();
+        if (['w', 'a', 's', 'd'].includes(key)) {
+          keysPressed[key] = true;
         }
       });
       document.addEventListener('keyup', (event) => {
-        switch (event.key.toLowerCase()) {
-          case 'w': keysPressed.w = false; break;
-          case 'a': keysPressed.a = false; break;
-          case 's': keysPressed.s = false; break;
-          case 'd': keysPressed.d = false; break;
+        const key = event.key.toLowerCase();
+        if (['w', 'a', 's', 'd'].includes(key)) {
+          keysPressed[key] = false;
         }
       });
 
@@ -158,10 +152,12 @@
         if (keysPressed.a) character.position.x -= speed;
         if (keysPressed.d) character.position.x += speed;
 
+        // Basic camera follow.
         camera.position.x = character.position.x;
         camera.position.z = character.position.z + 5;
         camera.lookAt(character.position);
 
+        // Display invitation when in target zone (e.g., x > 2 and z < -2).
         const messageEl = document.getElementById("message");
         if (character.position.x > 2 && character.position.z < -2) {
           messageEl.innerText = "Hey, would you like to go on a date?";

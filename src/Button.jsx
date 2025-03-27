@@ -1,13 +1,12 @@
 // src/Button.jsx
 import React, { useState, useRef } from 'react'
-import { RigidBody, useRapier } from '@react-three/rapier'
+import { RigidBody } from '@react-three/rapier'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 export default function Button(props) {
   const [pressed, setPressed] = useState(false)
   const groupRef = useRef()
-  // We'll use a ref for the current squish value
   const squish = useRef(1)
 
   const handleCollisionEnter = (event) => {
@@ -19,15 +18,15 @@ export default function Button(props) {
   const handleCollisionExit = (event) => {
     console.log("Button collision ended:", event)
     setPressed(false)
+    window.doorOpen = false
   }
 
-  // Use a frame loop to smoothly interpolate squish
   useFrame(() => {
-    const target = pressed ? 0.5 : 1 // target scale for Y
-    squish.current = THREE.MathUtils.lerp(squish.current, target, 0.05) // adjust interpolation factor for slower transition
+    const target = pressed ? 0.5 : 1
+    squish.current = THREE.MathUtils.lerp(squish.current, target, 0.05)
     if (groupRef.current) {
       groupRef.current.scale.y = squish.current
-      // Offset downward relative to squish (if scale is 0.5, move down by 0.1; if 1, no offset)
+      // Adjust vertical offset so the bottom edge stays anchored
       groupRef.current.position.y = (squish.current - 1) * 0.2
     }
   })
@@ -35,14 +34,15 @@ export default function Button(props) {
   return (
     <RigidBody
       type="fixed"
-      colliders="cuboid"
+      colliders="hull"  // Use hull so the collider better matches the tapered shape
       onCollisionEnter={handleCollisionEnter}
       onCollisionExit={handleCollisionExit}
       {...props}
     >
-      <group ref={groupRef}>
+      <group ref={groupRef} rotation={[0, Math.PI / 4, 0]}>
         <mesh>
-          <boxGeometry args={[1, 0.2, 1]} />
+          {/* A cylinder with 4 segments yields a tapered, square-like shape */}
+          <cylinderGeometry args={[0.4, 0.5, 0.2, 4]} />
           <meshStandardMaterial color="#cc9911" />
         </mesh>
       </group>

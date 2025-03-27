@@ -9,7 +9,7 @@ export default function Duck(props) {
   // Load the duck model from an external URL
   const duck = useGLTF('https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb')
   const bodyRef = useRef()
-  const duckGroup = useRef() // Group to control visual rotation and waddle
+  const duckGroup = useRef() // Group for controlling visual rotation and waddle
 
   // Set up basic WASD keyboard controls
   const keys = useRef({ w: false, a: false, s: false, d: false })
@@ -33,8 +33,8 @@ export default function Duck(props) {
     const body = bodyRef.current
     if (!body) return
 
-    // Apply impulses based on key state (slowed down)
-    const impulseSpeed = 0.25
+    // Apply a lower impulse for slower movement.
+    const impulseSpeed = 0.15
     let impulse = { x: 0, y: 0, z: 0 }
     if (keys.current.w) impulse.z -= impulseSpeed
     if (keys.current.s) impulse.z += impulseSpeed
@@ -44,26 +44,13 @@ export default function Duck(props) {
       body.applyImpulse(impulse, true)
     }
 
-    // Compute horizontal speed
+    // Get the body's horizontal velocity.
     const velocity = body.linvel()
     const horizontalSpeed = Math.sqrt(velocity.x ** 2 + velocity.z ** 2)
-
     if (duckGroup.current) {
-      const t = state.clock.getElapsedTime()
-      const wobbleAmplitude = 0.05
-      // If moving, target wobble oscillates; else, target is 0.
-      const targetWobble = horizontalSpeed > 0.1 ? wobbleAmplitude * Math.sin(t * 10) : 0
-      // Lerp current wobble toward target for smooth transition.
-      duckGroup.current.rotation.z = THREE.MathUtils.lerp(
-        duckGroup.current.rotation.z,
-        targetWobble,
-        0.1
-      )
-
-      // Only update Y rotation when moving.
-      if (horizontalSpeed > 0.1) {
-        // Subtract Math.PI/2 so that moving forward (velocity ~ [0, 0, -speed])
-        // makes the duck face forward.
+      // Desired rotation: based on velocity, but subtract π/2 so that when moving forward (velocity ~ [0, 0, -speed])
+      // the duck faces forward.
+      if (horizontalSpeed > 0.05) {
         const desiredAngle = Math.atan2(velocity.x, velocity.z) - Math.PI / 2
         duckGroup.current.rotation.y = THREE.MathUtils.lerp(
           duckGroup.current.rotation.y,
@@ -71,6 +58,14 @@ export default function Duck(props) {
           0.1
         )
       }
+      // Apply a waddle effect with increased amplitude.
+      const t = state.clock.getElapsedTime()
+      const targetWobble = horizontalSpeed > 0.05 ? 0.1 * Math.sin(t * 10) : 0
+      duckGroup.current.rotation.z = THREE.MathUtils.lerp(
+        duckGroup.current.rotation.z,
+        targetWobble,
+        0.1
+      )
     }
   })
 
@@ -79,7 +74,7 @@ export default function Duck(props) {
       <group ref={duckGroup}>
         <primitive
           object={duck.scene}
-          scale={[0.5, 0.5, 0.5]} // Adjust as needed
+          scale={[0.5, 0.5, 0.5]}
           castShadow
         />
       </group>

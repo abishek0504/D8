@@ -1,26 +1,21 @@
 // src/Door.jsx
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { RigidBody } from '@react-three/rapier'
 import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export default function Door(props) {
   const doorRef = useRef()
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (window.doorOpen && !open) {
-        setOpen(true)
-      }
-    }, 500)
-    return () => clearInterval(interval)
-  }, [open])
 
   useFrame(() => {
-    if (doorRef.current && open) {
-      if (doorRef.current.rotation.y > -Math.PI / 2) {
-        doorRef.current.rotation.y -= 0.01
-      }
+    if (doorRef.current) {
+      // If the button is pressed, target angle is -90°; otherwise 0.
+      const targetAngle = window.doorOpen ? -Math.PI / 2 : 0
+      doorRef.current.rotation.y = THREE.MathUtils.lerp(
+        doorRef.current.rotation.y,
+        targetAngle,
+        0.05
+      )
     }
   })
 

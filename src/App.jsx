@@ -4,6 +4,10 @@ import { Canvas } from '@react-three/fiber'
 import { Physics, RigidBody } from '@react-three/rapier'
 import { OrbitControls } from '@react-three/drei'
 import Duck from './Duck'
+import Button from './Button'
+import Door from './Door'
+import Crate from './Crate'
+import Message from './Message'
 
 export default function App() {
   return (
@@ -13,7 +17,7 @@ export default function App() {
 
       <Suspense fallback={null}>
         <Physics gravity={[0, -9.81, 0]}>
-          {/* Ground wrapped in a static RigidBody */}
+          {/* Ground plane wrapped as a static physics body */}
           <RigidBody type="fixed" colliders="hull">
             <mesh rotation-x={-Math.PI / 2} receiveShadow>
               <planeGeometry args={[50, 50]} />
@@ -21,9 +25,21 @@ export default function App() {
             </mesh>
           </RigidBody>
 
-          {/* Position the duck a bit higher so it starts on the ground */}
+          {/* The Duck with keyboard controls */}
           <Duck position={[0, 2, 0]} />
+
+          {/* Interactive button (pressure plate) */}
+          <Button position={[-2, 0.1, -5]} />
+
+          {/* Door that opens when the button is triggered */}
+          <Door position={[2, 1, -5]} />
+
+          {/* Pushable crate */}
+          <Crate position={[2, 0.5, -2]} />
         </Physics>
+
+        {/* Hidden message that appears when the door opens */}
+        <Message position={[0, 3, -10]} />
       </Suspense>
 
       <OrbitControls enablePan={false} maxPolarAngle={Math.PI / 2} />

@@ -1,12 +1,19 @@
 // src/Button.jsx
-import React from 'react'
+import React, { useState } from 'react'
 import { RigidBody } from '@react-three/rapier'
 
 export default function Button(props) {
+  const [pressed, setPressed] = useState(false)
+
   const handleCollisionEnter = (event) => {
-    console.log("Button collision detected with:", event)
-    // You can check event.otherObject or similar if needed.
+    console.log("Button collision detected:", event)
+    setPressed(true)
     window.doorOpen = true
+  }
+
+  const handleCollisionExit = (event) => {
+    console.log("Button collision ended:", event)
+    setPressed(false)
   }
 
   return (
@@ -15,12 +22,17 @@ export default function Button(props) {
       colliders="cuboid"
       sensor
       onCollisionEnter={handleCollisionEnter}
+      onCollisionExit={handleCollisionExit}
       {...props}
     >
-      <mesh>
-        <boxGeometry args={[1, 0.2, 1]} />
-        <meshStandardMaterial color="#cc9911" />
-      </mesh>
+      {/* Wrap the mesh in a group with an offset so that its bottom is anchored.
+          When pressed, we lower the group to simulate squish. */}
+      <group position={[0, pressed ? -0.1 : 0, 0]}>
+        <mesh scale={[1, pressed ? 0.5 : 1, 1]}>
+          <boxGeometry args={[1, 0.2, 1]} />
+          <meshStandardMaterial color="#cc9911" />
+        </mesh>
+      </group>
     </RigidBody>
   )
 }

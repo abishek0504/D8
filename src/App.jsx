@@ -17,7 +17,7 @@ export default function App() {
 
       <Suspense fallback={null}>
         <Physics gravity={[0, -9.81, 0]}>
-          {/* Ground plane wrapped as a static physics body */}
+          {/* Ground plane */}
           <RigidBody type="fixed" colliders="hull">
             <mesh rotation-x={-Math.PI / 2} receiveShadow>
               <planeGeometry args={[50, 50]} />
@@ -25,20 +25,20 @@ export default function App() {
             </mesh>
           </RigidBody>
 
-          {/* The Duck with keyboard controls */}
+          {/* The Duck */}
           <Duck position={[0, 2, 0]} />
 
-          {/* Interactive button (pressure plate) */}
+          {/* Pressure plate button */}
           <Button position={[-2, 0.1, -5]} />
 
-          {/* Door that opens when the button is triggered */}
+          {/* Door */}
           <Door position={[2, 1, -5]} />
 
           {/* Pushable crate */}
           <Crate position={[2, 0.5, -2]} />
         </Physics>
 
-        {/* Hidden message that appears when the door opens */}
+        {/* Hidden message */}
         <Message position={[0, 3, -10]} />
       </Suspense>
 

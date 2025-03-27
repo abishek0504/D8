@@ -18,7 +18,6 @@ export default function Door(props) {
 
   useFrame(() => {
     if (doorRef.current && open) {
-      // Rotate the door until it reaches -90 degrees (open)
       if (doorRef.current.rotation.y > -Math.PI / 2) {
         doorRef.current.rotation.y -= 0.01
       }

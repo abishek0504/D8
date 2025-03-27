@@ -9,7 +9,7 @@ export default function Duck(props) {
   const duck = useGLTF('https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb')
   const bodyRef = useRef()
 
-  // Set up keyboard controls
+  // Set up basic WASD keyboard controls
   const keys = useRef({ w: false, a: false, s: false, d: false })
   useEffect(() => {
     const handleKey = (e) => {
@@ -42,10 +42,10 @@ export default function Duck(props) {
   })
 
   return (
-    <RigidBody ref={bodyRef} colliders="hull" mass={1} {...props}>
+    <RigidBody ref={bodyRef} colliders="hull" mass={1} lockRotations {...props}>
       <primitive
         object={duck.scene}
-        scale={[.5, 0.5, 0.5]}
+        scale={[0.5, 0.5, 0.5]}  // adjust scale as needed
         castShadow
       />
     </RigidBody>

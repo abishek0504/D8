@@ -20,13 +20,12 @@ export default function Button(props) {
     <RigidBody
       type="fixed"
       colliders="cuboid"
-      sensor
+      // Remove sensor so the button becomes a physical collider
       onCollisionEnter={handleCollisionEnter}
       onCollisionExit={handleCollisionExit}
       {...props}
     >
-      {/* Wrap the mesh in a group with an offset so that its bottom is anchored.
-          When pressed, we lower the group to simulate squish. */}
+      {/* Wrap mesh in a group to shift it down when pressed */}
       <group position={[0, pressed ? -0.1 : 0, 0]}>
         <mesh scale={[1, pressed ? 0.5 : 1, 1]}>
           <boxGeometry args={[1, 0.2, 1]} />

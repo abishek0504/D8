@@ -2,26 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Interactive Date Invitation</title>
+  <title>Interactive Date Invitation - Pointer Lock</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin:0; overflow:hidden; }
+    #blocker {
+      position: absolute;
+      top:0;
+      bottom:0;
+      width:100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    #instructions {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      color: #ffffff;
+      text-align: center;
+      cursor: pointer;
+    }
     #message {
       position: absolute;
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      color: #fff;
       font-family: sans-serif;
       font-size: 24px;
-      z-index: 100;
-      transition: background-color 0.5s ease;
-      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      background: rgba(0,0,0,0.5);
       padding: 10px 20px;
       border-radius: 5px;
+      z-index: 200;
+      display: none;
     }
   </style>
-  <!-- Import map to resolve "three" module -->
+  <!-- Import map to resolve "three" -->
   <script type="importmap">
     {
       "imports": {
@@ -31,13 +49,18 @@
   </script>
 </head>
 <body>
-  <div id="message">Use WASD keys to move the character!</div>
+  <div id="blocker">
+    <div id="instructions">Click to Play</div>
+  </div>
+  <div id="message">Hey, would you like to go on a date?</div>
   <script type="module">
     import * as THREE from 'three';
-    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+    import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/controls/PointerLockControls.js';
 
-    let scene, camera, renderer, character;
-    const keysPressed = { w: false, a: false, s: false, d: false };
+    let camera, scene, renderer, controls;
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    const velocity = new THREE.Vector3();
+    let prevTime = performance.now();
 
     init();
     animate();
@@ -47,117 +70,143 @@
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87CEEB);
 
-      // Set up the camera.
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 2, 5);
-      camera.lookAt(0, 0, 0);
-
-      // Set up the renderer.
+      // Set up camera.
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 1000);
+      
+      // Set up renderer.
       renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(0x87CEEB);
       document.body.appendChild(renderer.domElement);
 
-      // Add ambient and directional lights.
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(5, 10, 7.5);
-      scene.add(directionalLight);
+      // Add hemisphere light.
+      const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+      light.position.set(0, 200, 0);
+      scene.add(light);
 
-      // Load a grass texture from Pixabay.
+      // Create the ground.
       const textureLoader = new THREE.TextureLoader();
+      // Using a grass texture hosted on Pixabay
       const groundTexture = textureLoader.load(
-        'https://cdn.pixabay.com/photo/2016/11/29/05/04/grass-1868288_960_720.jpg',
+        'https://cdn.pixabay.com/photo/2017/01/20/19/53/grass-1993559_1280.jpg',
         () => { console.log("Ground texture loaded."); },
         undefined,
         (err) => { console.error("Error loading ground texture:", err); }
       );
       groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
       groundTexture.repeat.set(25, 25);
-
-      // Create a large ground plane.
       const groundMaterial = new THREE.MeshLambertMaterial({ map: groundTexture });
-      const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), groundMaterial);
-      ground.rotation.x = -Math.PI / 2;
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), groundMaterial);
+      ground.rotation.x = - Math.PI / 2;
       ground.position.y = 0;
       scene.add(ground);
 
-      // Add a fallback red cube until the Duck model loads.
-      const fallbackGeometry = new THREE.BoxGeometry(1, 1, 1);
-      const fallbackMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-      const fallbackCube = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
-      fallbackCube.position.set(-3, 0.5, 0);
-      scene.add(fallbackCube);
+      // Set up PointerLockControls.
+      controls = new PointerLockControls(camera, document.body);
+      scene.add(controls.getObject());
 
-      // Load the Duck model using GLTFLoader.
-      const loader = new GLTFLoader();
-      console.log("Loading Duck model...");
-      loader.load(
-        'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb',
-        (gltf) => {
-          console.log("Duck model loaded successfully.");
-          scene.remove(fallbackCube);
-          character = gltf.scene;
-          // Scale down the Duck for the scene.
-          character.scale.set(0.01, 0.01, 0.01);
-          character.position.set(0, 0, 0);
-          scene.add(character);
-        },
-        undefined,
-        (error) => { console.error("Error loading Duck model:", error); }
-      );
+      const blocker = document.getElementById('blocker');
+      const instructions = document.getElementById('instructions');
 
-      // Set up WASD keyboard input.
-      document.addEventListener('keydown', (event) => {
-        const key = event.key.toLowerCase();
-        if (keysPressed.hasOwnProperty(key)) {
-          keysPressed[key] = true;
-        }
+      instructions.addEventListener('click', () => {
+        controls.lock();
+      }, false);
+
+      controls.addEventListener('lock', () => {
+        blocker.style.display = 'none';
       });
-      document.addEventListener('keyup', (event) => {
-        const key = event.key.toLowerCase();
-        if (keysPressed.hasOwnProperty(key)) {
-          keysPressed[key] = false;
-        }
+
+      controls.addEventListener('unlock', () => {
+        blocker.style.display = 'flex';
       });
+
+      // Listen for key events.
+      const onKeyDown = function (event) {
+        switch (event.code) {
+          case 'ArrowUp':
+          case 'KeyW':
+            moveForward = true;
+            break;
+          case 'ArrowLeft':
+          case 'KeyA':
+            moveLeft = true;
+            break;
+          case 'ArrowDown':
+          case 'KeyS':
+            moveBackward = true;
+            break;
+          case 'ArrowRight':
+          case 'KeyD':
+            moveRight = true;
+            break;
+        }
+      };
+
+      const onKeyUp = function (event) {
+        switch (event.code) {
+          case 'ArrowUp':
+          case 'KeyW':
+            moveForward = false;
+            break;
+          case 'ArrowLeft':
+          case 'KeyA':
+            moveLeft = false;
+            break;
+          case 'ArrowDown':
+          case 'KeyS':
+            moveBackward = false;
+            break;
+          case 'ArrowRight':
+          case 'KeyD':
+            moveRight = false;
+            break;
+        }
+      };
+
+      document.addEventListener('keydown', onKeyDown, false);
+      document.addEventListener('keyup', onKeyUp, false);
 
       window.addEventListener('resize', onWindowResize, false);
     }
 
     function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.aspect = window.innerWidth/window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     function animate() {
       requestAnimationFrame(animate);
-      // Move the character if loaded.
-      if (character) {
-        const speed = 0.05;
-        if (keysPressed.w) character.position.z -= speed;
-        if (keysPressed.s) character.position.z += speed;
-        if (keysPressed.a) character.position.x -= speed;
-        if (keysPressed.d) character.position.x += speed;
-        // Slowly rotate the Duck for a dynamic effect.
-        character.rotation.y += 0.01;
 
-        // Make the camera follow the Duck.
-        camera.position.x = character.position.x;
-        camera.position.z = character.position.z + 5;
-        camera.lookAt(character.position);
+      const time = performance.now();
+      const delta = (time - prevTime) / 1000;
 
-        // Update the message when the Duck enters the target zone (example: x > 2 and z < -2).
-        const messageEl = document.getElementById("message");
-        if (character.position.x > 2 && character.position.z < -2) {
-          messageEl.innerText = "Hey, would you like to go on a date?";
-          messageEl.style.backgroundColor = "rgba(255,64,129,0.8)";
-        } else {
-          messageEl.innerText = "Use WASD keys to move the character!";
-          messageEl.style.backgroundColor = "rgba(0,0,0,0.5)";
-        }
+      // Decelerate velocity.
+      velocity.x -= velocity.x * 10.0 * delta;
+      velocity.z -= velocity.z * 10.0 * delta;
+
+      const speed = 400.0;
+
+      if (moveForward) velocity.z -= speed * delta;
+      if (moveBackward) velocity.z += speed * delta;
+      if (moveLeft) velocity.x -= speed * delta;
+      if (moveRight) velocity.x += speed * delta;
+
+      controls.moveRight(-velocity.x * delta);
+      controls.moveForward(-velocity.z * delta);
+
+      prevTime = time;
+
+      // Check if the player is in the target zone.
+      // Adjust the target coordinates (here, x > 50 and z < -50) as needed.
+      const messageEl = document.getElementById('message');
+      const playerPos = controls.getObject().position;
+      if (playerPos.x > 50 && playerPos.z < -50) {
+        messageEl.style.display = 'block';
+      } else {
+        messageEl.style.display = 'none';
       }
+
       renderer.render(scene, camera);
     }
   </script>
